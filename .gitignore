@@ -1,0 +1,18 @@
+# Build outputs -- large, regenerated every build, never needed in git
+/app/build/
+/build/
+.gradle/
+
+# Android Studio local files -- specific to your machine
+.idea/
+*.iml
+local.properties
+
+# CRITICAL: never commit your signing keystore or its base64 copy.
+# These go into GitHub Secrets instead (see README.md step 4) --
+# committing them here would defeat the entire purpose of using Secrets.
+*.keystore
+keystore-base64.txt
+
+# OS files
+.DS_Store
