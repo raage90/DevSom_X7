@@ -26,7 +26,7 @@ object UrlResolver {
 
     // Add more resolver URLs here over time (different GitHub accounts,
     // a Cloudflare Worker, etc). Checked in order, first success wins.
-    private val resolverUrls = listOf(
+    private val resolverUrls: List<String> = listOf(
         // Example: "https://raw.githubusercontent.com/youraccount/resolver1/main/config.json"
     )
 
