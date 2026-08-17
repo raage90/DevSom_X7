@@ -1,7 +1,11 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp")
+    // NOTE: no explicit Kotlin plugin here. AGP 9.3.1 provides Kotlin
+    // support built-in -- applying org.jetbrains.kotlin.android on top of
+    // that caused "Cannot add extension with name 'kotlin', as there is
+    // an extension already registered" (a real conflict, not a typo).
+    // The version is still declared (apply false) in the root
+    // build.gradle.kts so it's available if this ever needs to change.
 }
 
 android {
@@ -50,9 +54,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    // NOTE: the old kotlinOptions { jvmTarget = "17" } block was removed --
+    // that DSL belongs to the separate Kotlin Gradle plugin we're no longer
+    // applying explicitly. compileOptions above covers the Java/JVM target.
 
     buildFeatures {
         viewBinding = true
@@ -86,10 +90,9 @@ dependencies {
     // Image loading (thumbnails, news photos)
     implementation("io.coil-kt:coil:2.6.0")
 
-    // Local offline cache (Room database)
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    ksp("androidx.room:room-compiler:2.6.1")
+    // Local offline cache (Room database) -- not yet implemented in code,
+    // so removed for now rather than carrying an untested dependency.
+    // Re-add when we build the offline caching feature.
 
     testImplementation("junit:junit:4.13.2")
 }

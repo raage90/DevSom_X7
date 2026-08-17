@@ -17,16 +17,36 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # This provisions Gradle itself directly, so we don't depend on a
-      # gradlew wrapper script existing in the repo (Android Studio uses
-      # its own bundled Gradle locally and doesn't always generate one).
+      # Caches Gradle downloads AND respects the version pinned in
+      # gradle/wrapper/gradle-wrapper.properties -- works together with
+      # ./gradlew below rather than replacing it, so the build uses the
+      # exact same Gradle/AAPT2 pairing your local Android Studio uses.
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.7'
+          # Forces a completely fresh cache this run, since the first two
+          # failed attempts (before the wrapper existed) may have left a
+          # corrupted dependency cache behind -- same root cause as the
+          # local Android Studio issue that "Invalidate Caches" fixed.
+          cache-write-only: true
 
       - name: Decode signing keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # Diagnostic step: prints exactly which versions of these 3 libraries
+      # actually got resolved, and whether their resources were extracted.
+      # This never fails the build (continue-on-error) -- it just gives us
+      # real data instead of guessing further.
+      - name: Diagnose dependency resolution
+        continue-on-error: true
+        run: |
+          echo "---- Dependency tree for the 3 suspect libraries ----"
+          ./gradlew :app:dependencies --configuration releaseRuntimeClasspath | grep -i -A2 -E "constraintlayout|material:|media3-ui" || true
+          echo "---- Checking extracted AAR resources exist ----"
+          find ~/.gradle/caches -iname "*constraintlayout*" -o -iname "*material-1.12*" -o -iname "*media3-ui*" 2>/dev/null | head -30
 
       - name: Build release APK
         env:
@@ -36,7 +56,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           APP_ACCESS_KEY: ${{ secrets.APP_ACCESS_KEY }}
           FALLBACK_API_URL: ${{ secrets.FALLBACK_API_URL }}
-        run: gradle assembleRelease
+        run: ./gradlew assembleRelease --refresh-dependencies
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
