@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace = "com.tijaabo.app"
+    namespace = "com.galcad.app"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.tijaabo.app"
+        applicationId = "com.galcad.app"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -43,8 +43,13 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            // TEMPORARILY disabled: minification without correct Gson/Retrofit
+            // "keep" rules is a well-known cause of exactly this crash pattern
+            // (network data silently empty, or a crash during JSON handling).
+            // Re-enable once we've confirmed the app is fully stable and
+            // tested a minified build specifically, with real device logs.
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("release")
         }

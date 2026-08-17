@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="background">#0F1115</color>
-    <color name="surface">#1A1D24</color>
+    <!-- Light theme (default) -->
+    <color name="background">#FFFFFF</color>
+    <color name="surface">#F5F6F8</color>
     <color name="accent">#4F7CFF</color>
-    <color name="text_primary">#E5E7EB</color>
-    <color name="text_secondary">#9CA3AF</color>
-    <color name="error">#FF6B6B</color>
+    <color name="text_primary">#111318</color>
+    <color name="text_secondary">#6B7280</color>
+    <color name="error">#DC2626</color>
 </resources>

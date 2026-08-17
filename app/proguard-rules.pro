@@ -1,5 +1,36 @@
 # Add project specific ProGuard rules here.
-# Default AGP rules already handle most cases for the libraries used
-# (Retrofit, OkHttp, Gson, Media3, Room). This file is intentionally
-# minimal to start -- add rules here only if a release build crashes
-# with a "class not found" style error that a debug build doesn't have.
+#
+# Minification is currently OFF (see app/build.gradle.kts) while we confirm
+# the app is stable. These rules are ready for when we turn it back on --
+# without rules like these, Gson/Retrofit commonly break silently (data
+# comes back empty) or crash during JSON serialization, which is what
+# likely caused today's crash and empty screens.
+
+# Retrofit
+-keepattributes Signature
+-keepattributes *Annotation*
+-keepattributes InnerClasses
+-keep class retrofit2.** { *; }
+-keepclasseswithmembers class * {
+    @retrofit2.http.* <methods>;
+}
+-dontwarn retrofit2.**
+
+# OkHttp
+-dontwarn okhttp3.**
+-dontwarn okio.**
+
+# Gson -- keep our data model classes and their fields so JSON parsing
+# and serialization survive obfuscation/shrinking
+-keep class com.galcad.app.data.** { *; }
+-keep class com.google.gson.** { *; }
+-keepclassmembers,allowobfuscation class * {
+  @com.google.gson.annotations.SerializedName <fields>;
+}
+-keepclassmembers,allowobfuscation class * implements java.io.Serializable {
+  <fields>;
+}
+
+# Media3 / ExoPlayer
+-dontwarn androidx.media3.**
+-keep class androidx.media3.** { *; }
