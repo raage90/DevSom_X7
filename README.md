@@ -35,7 +35,7 @@ KEYSTORE_BASE64      = (base64 -i release.keystore | output, one line)
 KEYSTORE_PASSWORD    = (the password you set above)
 KEY_ALIAS             = tijaabo
 KEY_PASSWORD          = (same or different password)
-APP_ACCESS_KEY        = (the SAME value as APP_ACCESS_KEY in your Railway backend)
+APP_SIGNING_SECRET    = (the SAME value as APP_SIGNING_SECRET in your Railway backend)
 FALLBACK_API_URL      = https://resourceful-peace-production.up.railway.app/
 ```
 

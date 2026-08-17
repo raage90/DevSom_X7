@@ -24,7 +24,10 @@ class SplashActivity : AppCompatActivity() {
             // 1. Find the real backend address (resolver system, falls back
             //    to the built-in Railway URL if nothing responds)
             val baseUrl = UrlResolver.resolveApiBaseUrl(applicationContext)
-            ApiClient.init(baseUrl)
+            // Same anonymous per-install ID used for analytics, reused here
+            // as part of every request's signature.
+            val installId = DeviceIdentity.getOrCreateDeviceHash(applicationContext)
+            ApiClient.init(baseUrl, installId)
 
             // 2. Check whether this install is too old to keep using
             val versionCheckPassed = checkAppVersion()
@@ -32,7 +35,7 @@ class SplashActivity : AppCompatActivity() {
             if (versionCheckPassed) {
                 // 3. Fire-and-forget analytics ping -- never blocks startup,
                 //    and a failure here never stops the app from opening
-                trackOpenSilently()
+                trackOpenSilently(installId)
                 goToMainApp()
             }
             // if the version check failed, checkAppVersion() already
@@ -62,10 +65,9 @@ class SplashActivity : AppCompatActivity() {
         }
     }
 
-    private fun trackOpenSilently() {
+    private fun trackOpenSilently(deviceHash: String) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val deviceHash = DeviceIdentity.getOrCreateDeviceHash(applicationContext)
                 val deviceModel = DeviceIdentity.getDeviceModel()
                 ApiClient.get().track(
                     TrackRequest(

@@ -19,12 +19,12 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        // The app-only secret key (Layer 2 security). Injected at build time
-        // from a GitHub Actions Secret -- never committed to source control.
-        // .takeIf { it.isNotBlank() } matters here: an unset GitHub Secret
-        // comes through as an empty string, not null, so a plain ?: check
-        // alone would silently accept "" instead of falling back.
-        buildConfigField("String", "APP_ACCESS_KEY", "\"${System.getenv("APP_ACCESS_KEY")?.takeIf { it.isNotBlank() } ?: ""}\"")
+        // Request-signing secret (Layer 2 security, upgraded). Used to
+        // HMAC-sign every request along with a timestamp + one-time nonce,
+        // so a captured request can't just be replayed like a static key
+        // could. Injected at build time from a GitHub Actions Secret --
+        // never committed to source control.
+        buildConfigField("String", "APP_SIGNING_SECRET", "\"${System.getenv("APP_SIGNING_SECRET")?.takeIf { it.isNotBlank() } ?: ""}\"")
         // Your real Railway backend. Swappable later via the resolver system
         // without needing a new APK build.
         buildConfigField("String", "FALLBACK_API_URL", "\"${System.getenv("FALLBACK_API_URL")?.takeIf { it.isNotBlank() } ?: "https://resourceful-peace-production.up.railway.app/"}\"")

@@ -54,7 +54,7 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          APP_ACCESS_KEY: ${{ secrets.APP_ACCESS_KEY }}
+          APP_SIGNING_SECRET: ${{ secrets.APP_SIGNING_SECRET }}
           FALLBACK_API_URL: ${{ secrets.FALLBACK_API_URL }}
         run: ./gradlew assembleRelease --refresh-dependencies
 

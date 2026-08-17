@@ -15,15 +15,27 @@ object ApiClient {
     /**
      * Builds (or rebuilds, if the base URL changed) the Retrofit client.
      * Call this once at app startup after UrlResolver has determined the
-     * real API address.
+     * real API address. installId is the same anonymous per-install ID
+     * used for analytics (DeviceIdentity) -- reused here as part of the
+     * request signature.
      */
-    fun init(baseUrl: String) {
+    fun init(baseUrl: String, installId: String) {
         if (service != null && currentBaseUrl == baseUrl) return
         currentBaseUrl = baseUrl
 
-        val appKeyInterceptor = Interceptor { chain ->
-            val request = chain.request().newBuilder()
-                .addHeader("X-App-Key", BuildConfig.APP_ACCESS_KEY)
+        val signingInterceptor = Interceptor { chain ->
+            val original = chain.request()
+            val signed = RequestSigner.sign(
+                method = original.method,
+                path = original.url.encodedPath,
+                installId = installId,
+                secret = BuildConfig.APP_SIGNING_SECRET
+            )
+            val request = original.newBuilder()
+                .addHeader("X-Install-Id", signed.installId)
+                .addHeader("X-Timestamp", signed.timestamp)
+                .addHeader("X-Nonce", signed.nonce)
+                .addHeader("X-Signature", signed.signature)
                 .build()
             chain.proceed(request)
         }
@@ -35,7 +47,7 @@ object ApiClient {
         }
 
         val httpClient = OkHttpClient.Builder()
-            .addInterceptor(appKeyInterceptor)
+            .addInterceptor(signingInterceptor)
             .addInterceptor(loggingInterceptor)
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
@@ -51,5 +63,5 @@ object ApiClient {
     }
 
     fun get(): ApiService = service
-        ?: throw IllegalStateException("ApiClient.init() must be called before use, normally from AppController at startup.")
+        ?: throw IllegalStateException("ApiClient.init() must be called before use, normally from SplashActivity at startup.")
 }
