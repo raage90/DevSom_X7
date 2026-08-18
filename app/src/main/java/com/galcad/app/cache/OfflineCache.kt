@@ -18,9 +18,9 @@ import java.io.File
  * security design and wouldn't work later anyway.
  */
 object OfflineCache {
-    private val gson = Gson()
+    val gson = Gson()
 
-    private fun cacheFile(context: Context, key: String): File {
+    fun cacheFile(context: Context, key: String): File {
         // sanitize the key so it's safe as a filename
         val safeKey = key.replace(Regex("[^a-zA-Z0-9_-]"), "_")
         return File(context.cacheDir, "offline_$safeKey.json")
