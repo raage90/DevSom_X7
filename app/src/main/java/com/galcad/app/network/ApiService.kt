@@ -16,13 +16,13 @@ interface ApiService {
     suspend fun getCategories(@Query("media_type") mediaType: String): Response<List<Category>>
 
     @GET("api/videos")
-    suspend fun getVideos(@Query("category_id") categoryId: Int): Response<List<VideoListItem>>
+    suspend fun getVideos(@Query("category_id") categoryId: Int?): Response<List<VideoListItem>>
 
     @GET("api/videos/{id}/play")
     suspend fun playVideo(@Path("id") id: Int): Response<VideoPlayResponse>
 
     @GET("api/audio")
-    suspend fun getAudio(@Query("category_id") categoryId: Int): Response<List<AudioListItem>>
+    suspend fun getAudio(@Query("category_id") categoryId: Int?): Response<List<AudioListItem>>
 
     @GET("api/audio/{id}/play")
     suspend fun playAudio(@Path("id") id: Int): Response<AudioPlayResponse>

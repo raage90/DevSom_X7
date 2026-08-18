@@ -92,27 +92,28 @@ class FolderBrowserFragment : Fragment() {
                     })
                 }
 
-                if (currentId != null) {
-                    if (mediaType == "video") {
-                        val videos = ApiClient.get().getVideos(currentId).body() ?: emptyList()
-                        if (videos.isNotEmpty()) {
-                            adapters.add(VideoAdapter(videos) { video ->
-                                val intent = Intent(requireContext(), VideoPlayerActivity::class.java)
-                                intent.putExtra(VideoPlayerActivity.EXTRA_ITEM_ID, video.id)
-                                intent.putExtra(VideoPlayerActivity.EXTRA_IS_AUDIO, false)
-                                startActivity(intent)
-                            })
-                        }
-                    } else {
-                        val audioItems = ApiClient.get().getAudio(currentId).body() ?: emptyList()
-                        if (audioItems.isNotEmpty()) {
-                            adapters.add(AudioAdapter(audioItems) { item ->
-                                val intent = Intent(requireContext(), VideoPlayerActivity::class.java)
-                                intent.putExtra(VideoPlayerActivity.EXTRA_ITEM_ID, item.id)
-                                intent.putExtra(VideoPlayerActivity.EXTRA_IS_AUDIO, true)
-                                startActivity(intent)
-                            })
-                        }
+                // Fetch content at every level, including the root -- videos/audio
+                // with no folder assigned live at root (categoryId = null) and were
+                // previously invisible because this fetch was skipped entirely there.
+                if (mediaType == "video") {
+                    val videos = ApiClient.get().getVideos(currentId).body() ?: emptyList()
+                    if (videos.isNotEmpty()) {
+                        adapters.add(VideoAdapter(videos) { video ->
+                            val intent = Intent(requireContext(), VideoPlayerActivity::class.java)
+                            intent.putExtra(VideoPlayerActivity.EXTRA_ITEM_ID, video.id)
+                            intent.putExtra(VideoPlayerActivity.EXTRA_IS_AUDIO, false)
+                            startActivity(intent)
+                        })
+                    }
+                } else {
+                    val audioItems = ApiClient.get().getAudio(currentId).body() ?: emptyList()
+                    if (audioItems.isNotEmpty()) {
+                        adapters.add(AudioAdapter(audioItems) { item ->
+                            val intent = Intent(requireContext(), VideoPlayerActivity::class.java)
+                            intent.putExtra(VideoPlayerActivity.EXTRA_ITEM_ID, item.id)
+                            intent.putExtra(VideoPlayerActivity.EXTRA_IS_AUDIO, true)
+                            startActivity(intent)
+                        })
                     }
                 }
 
