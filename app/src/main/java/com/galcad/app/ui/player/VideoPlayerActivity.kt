@@ -8,10 +8,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.cache.CacheDataSource
 import coil.load
 import com.galcad.app.databinding.ActivityVideoPlayerBinding
 import com.galcad.app.network.ApiClient
+import com.galcad.app.player.OfflineMediaCache
 import kotlinx.coroutines.launch
 
 /**
@@ -40,6 +45,9 @@ class VideoPlayerActivity : AppCompatActivity() {
     private var player: ExoPlayer? = null
     private var isAudio: Boolean = false
     private var isFullscreen: Boolean = false
+    private var currentItemId: Int = -1
+    private var upNextListener: Player.Listener? = null
+    private val playbackPrefs by lazy { getSharedPreferences("playback_progress", MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,7 +64,20 @@ class VideoPlayerActivity : AppCompatActivity() {
         // Starts in normal portrait, inline view -- NOT forced fullscreen.
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
 
-        player = ExoPlayer.Builder(this).build()
+        // Mirrors the old app's HLS buffering strategy while using Android's
+        // native Media3 player: enough forward buffer for unreliable networks,
+        // but bounded so it cannot grow without limit.
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(15_000, 60_000, 1_500, 3_000)
+            .build()
+        val dataSourceFactory = CacheDataSource.Factory()
+            .setCache(OfflineMediaCache.get(this))
+            .setUpstreamDataSourceFactory(DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(false))
+            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+        player = ExoPlayer.Builder(this)
+            .setLoadControl(loadControl)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+            .build()
         binding.playerView.player = player
 
         // Audio has no meaningful "fullscreen" -- hide the toggle for it
@@ -64,6 +85,9 @@ class VideoPlayerActivity : AppCompatActivity() {
             binding.fullscreenToggleButton.visibility = View.GONE
         } else {
             binding.fullscreenToggleButton.setOnClickListener { toggleFullscreen() }
+        }
+        binding.playerErrorText.setOnClickListener {
+            if (currentItemId != -1) loadAndPlay(currentItemId)
         }
 
         loadAndPlay(itemId)
@@ -103,6 +127,9 @@ class VideoPlayerActivity : AppCompatActivity() {
     }
 
     private fun loadAndPlay(itemId: Int) {
+        currentItemId = itemId
+        upNextListener?.let { player?.removeListener(it) }
+        upNextListener = null
         binding.playerLoadingSpinner.visibility = View.VISIBLE
         binding.playerErrorText.visibility = View.GONE
         binding.upNextRow.visibility = View.GONE
@@ -136,20 +163,21 @@ class VideoPlayerActivity : AppCompatActivity() {
                         }
                         binding.upNextRow.setOnClickListener { loadAndPlay(next.id) }
 
-                        player?.addListener(object : Player.Listener {
+                        upNextListener = object : Player.Listener {
                             override fun onPlaybackStateChanged(playbackState: Int) {
                                 if (playbackState == Player.STATE_ENDED) {
                                     player?.removeListener(this)
                                     loadAndPlay(next.id)
                                 }
                             }
-                        })
+                        }
+                        player?.addListener(upNextListener!!)
                     }
                 }
             } catch (e: Exception) {
                 binding.playerLoadingSpinner.visibility = View.GONE
                 binding.playerErrorText.visibility = View.VISIBLE
-                binding.playerErrorText.text = "Couldn't load this ${if (isAudio) "audio" else "video"}. Check your connection and try again."
+                binding.playerErrorText.text = "Couldn't load this ${if (isAudio) "audio" else "video"}. Tap here to retry."
             }
         }
     }
@@ -165,15 +193,21 @@ class VideoPlayerActivity : AppCompatActivity() {
         val mediaItem = MediaItem.fromUri(url)
         player?.setMediaItem(mediaItem)
         player?.prepare()
+        val savedPosition = playbackPrefs.getLong("video_$currentItemId", 0L)
+        if (!isAudio && savedPosition > 5_000) player?.seekTo(savedPosition)
         player?.playWhenReady = true
     }
 
     override fun onStop() {
+        if (!isAudio && currentItemId != -1) {
+            playbackPrefs.edit().putLong("video_$currentItemId", player?.currentPosition ?: 0L).apply()
+        }
         super.onStop()
         player?.pause()
     }
 
     override fun onDestroy() {
+        upNextListener?.let { player?.removeListener(it) }
         super.onDestroy()
         player?.release()
         player = null

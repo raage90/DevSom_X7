@@ -25,6 +25,9 @@ object ApiClient {
 
         val signingInterceptor = Interceptor { chain ->
             val original = chain.request()
+            check(BuildConfig.APP_SIGNING_SECRET.isNotBlank()) {
+                "APP_SIGNING_SECRET is missing from this build"
+            }
             val signed = RequestSigner.sign(
                 method = original.method,
                 path = original.url.encodedPath,
@@ -51,6 +54,8 @@ object ApiClient {
             .addInterceptor(loggingInterceptor)
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
+            .writeTimeout(15, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
             .build()
 
         val retrofit = Retrofit.Builder()

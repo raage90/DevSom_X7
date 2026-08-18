@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.galcad.app.cache.OfflineCache
 import com.galcad.app.data.NewsItem
 import com.galcad.app.databinding.FragmentNewsBinding
 import com.galcad.app.network.ApiClient
@@ -17,10 +16,6 @@ import com.galcad.app.ui.player.VideoPlayerActivity
 import kotlinx.coroutines.launch
 
 class NewsFragment : Fragment() {
-
-    companion object {
-        private const val CACHE_KEY = "news_feed"
-    }
 
     private var _binding: FragmentNewsBinding? = null
     private val binding get() = _binding!!
@@ -43,14 +38,9 @@ class NewsFragment : Fragment() {
             try {
                 val items = ApiClient.get().getNews().body() ?: emptyList()
                 binding.newsRecycler.adapter = NewsAdapter(items) { item -> onNewsClicked(item) }
-                OfflineCache.save(requireContext(), CACHE_KEY, items)
             } catch (e: Exception) {
-                // No internet or request failed -- fall back to the last
-                // successfully loaded feed instead of leaving the screen blank.
-                val cached = OfflineCache.load<List<NewsItem>>(requireContext(), CACHE_KEY)
-                if (cached != null) {
-                    binding.newsRecycler.adapter = NewsAdapter(cached) { item -> onNewsClicked(item) }
-                }
+                // keep whatever was showing before; a silent failure here is
+                // better than crashing the whole News tab
             } finally {
                 binding.newsSwipeRefresh.isRefreshing = false
             }

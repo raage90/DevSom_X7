@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.galcad.app.cache.OfflineCache
 import com.galcad.app.data.NewsItem
 import com.galcad.app.databinding.FragmentHomeBinding
 import com.galcad.app.network.ApiClient
@@ -25,10 +24,6 @@ import kotlinx.coroutines.launch
  * flagging this honestly rather than pretending it's a separate system today.
  */
 class HomeFragment : Fragment() {
-
-    companion object {
-        private const val CACHE_KEY = "home_feed"
-    }
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
@@ -51,14 +46,8 @@ class HomeFragment : Fragment() {
             try {
                 val items = ApiClient.get().getNews().body() ?: emptyList()
                 binding.newsRecycler.adapter = NewsAdapter(items) { item -> onItemClicked(item) }
-                OfflineCache.save(requireContext(), CACHE_KEY, items)
             } catch (e: Exception) {
-                // No internet or request failed -- fall back to the last
-                // successfully loaded feed instead of leaving the screen blank.
-                val cached = OfflineCache.load<List<NewsItem>>(requireContext(), CACHE_KEY)
-                if (cached != null) {
-                    binding.newsRecycler.adapter = NewsAdapter(cached) { item -> onItemClicked(item) }
-                }
+                // keep whatever was already showing rather than crash the tab
             } finally {
                 binding.newsSwipeRefresh.isRefreshing = false
             }

@@ -43,13 +43,8 @@ android {
 
     buildTypes {
         release {
-            // TEMPORARILY disabled: minification without correct Gson/Retrofit
-            // "keep" rules is a well-known cause of exactly this crash pattern
-            // (network data silently empty, or a crash during JSON handling).
-            // Re-enable once we've confirmed the app is fully stable and
-            // tested a minified build specifically, with real device logs.
-            isMinifyEnabled = false
-            isShrinkResources = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("release")
         }
@@ -91,6 +86,8 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.4.1")
     implementation("androidx.media3:media3-exoplayer-hls:1.4.1")
     implementation("androidx.media3:media3-ui:1.4.1")
+    implementation("androidx.media3:media3-datasource:1.4.1")
+    implementation("androidx.media3:media3-database:1.4.1")
 
     // Image loading (thumbnails, news photos)
     implementation("io.coil-kt:coil:2.6.0")

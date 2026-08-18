@@ -10,24 +10,11 @@ import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.lifecycle.lifecycleScope
 import com.galcad.app.R
-import com.galcad.app.cache.OfflineCache
-import com.galcad.app.data.AudioListItem
 import com.galcad.app.data.Category
-import com.galcad.app.data.VideoListItem
 import com.galcad.app.databinding.FragmentFolderBrowserBinding
 import com.galcad.app.network.ApiClient
 import com.galcad.app.ui.player.VideoPlayerActivity
 import kotlinx.coroutines.launch
-
-/**
- * What gets cached for offline viewing of one folder level: the subfolders
- * plus whichever content list applies (video or audio, never both).
- */
-data class FolderPageCache(
-    val subfolders: List<Category>,
-    val videos: List<VideoListItem>,
-    val audio: List<AudioListItem>
-)
 
 /**
  * Shows one level of your folder structure (e.g. "Taariikhda Soomaliya" ->
@@ -79,8 +66,6 @@ class FolderBrowserFragment : Fragment() {
         loadContent()
     }
 
-    private fun cacheKey() = "folder_${mediaType}_${categoryId ?: "root"}"
-
     private fun loadContent() {
         binding.folderLoadingSpinner.visibility = View.VISIBLE
         binding.folderEmptyText.visibility = View.GONE
@@ -95,70 +80,53 @@ class FolderBrowserFragment : Fragment() {
                     findNode(tree, currentId)?.children ?: emptyList()
                 }
 
-                var videos: List<VideoListItem> = emptyList()
-                var audioItems: List<AudioListItem> = emptyList()
+                val adapters = mutableListOf<androidx.recyclerview.widget.RecyclerView.Adapter<*>>()
+
+                if (subfolders.isNotEmpty()) {
+                    adapters.add(FolderAdapter(subfolders) { folder ->
+                        val next = newInstance(mediaType, folder.id, folder.name)
+                        parentFragmentManager.beginTransaction()
+                            .replace(R.id.fragmentContainer, next)
+                            .addToBackStack(null)
+                            .commit()
+                    })
+                }
+
                 if (currentId != null) {
                     if (mediaType == "video") {
-                        videos = ApiClient.get().getVideos(currentId).body() ?: emptyList()
+                        val videos = ApiClient.get().getVideos(currentId).body() ?: emptyList()
+                        if (videos.isNotEmpty()) {
+                            adapters.add(VideoAdapter(videos) { video ->
+                                val intent = Intent(requireContext(), VideoPlayerActivity::class.java)
+                                intent.putExtra(VideoPlayerActivity.EXTRA_ITEM_ID, video.id)
+                                intent.putExtra(VideoPlayerActivity.EXTRA_IS_AUDIO, false)
+                                startActivity(intent)
+                            })
+                        }
                     } else {
-                        audioItems = ApiClient.get().getAudio(currentId).body() ?: emptyList()
+                        val audioItems = ApiClient.get().getAudio(currentId).body() ?: emptyList()
+                        if (audioItems.isNotEmpty()) {
+                            adapters.add(AudioAdapter(audioItems) { item ->
+                                val intent = Intent(requireContext(), VideoPlayerActivity::class.java)
+                                intent.putExtra(VideoPlayerActivity.EXTRA_ITEM_ID, item.id)
+                                intent.putExtra(VideoPlayerActivity.EXTRA_IS_AUDIO, true)
+                                startActivity(intent)
+                            })
+                        }
                     }
                 }
 
-                OfflineCache.save(requireContext(), cacheKey(), FolderPageCache(subfolders, videos, audioItems))
-                renderContent(subfolders, videos, audioItems)
-            } catch (e: Exception) {
-                // No internet or request failed -- show the last cached
-                // version of this exact folder level if we have one.
-                val cached = OfflineCache.load<FolderPageCache>(requireContext(), cacheKey())
-                if (cached != null) {
-                    renderContent(cached.subfolders, cached.videos, cached.audio)
-                } else {
-                    binding.folderLoadingSpinner.visibility = View.GONE
+                binding.folderLoadingSpinner.visibility = View.GONE
+                if (adapters.isEmpty()) {
                     binding.folderEmptyText.visibility = View.VISIBLE
-                    binding.folderEmptyText.text = "Couldn't load this folder. Check your connection and try again."
+                } else {
+                    binding.folderContentRecycler.adapter = ConcatAdapter(adapters)
                 }
+            } catch (e: Exception) {
+                binding.folderLoadingSpinner.visibility = View.GONE
+                binding.folderEmptyText.visibility = View.VISIBLE
+                binding.folderEmptyText.text = "Couldn't load this folder. Check your connection and try again."
             }
-        }
-    }
-
-    private fun renderContent(subfolders: List<Category>, videos: List<VideoListItem>, audioItems: List<AudioListItem>) {
-        val adapters = mutableListOf<androidx.recyclerview.widget.RecyclerView.Adapter<*>>()
-
-        if (subfolders.isNotEmpty()) {
-            adapters.add(FolderAdapter(subfolders) { folder ->
-                val next = newInstance(mediaType, folder.id, folder.name)
-                parentFragmentManager.beginTransaction()
-                    .replace(R.id.fragmentContainer, next)
-                    .addToBackStack(null)
-                    .commit()
-            })
-        }
-
-        if (videos.isNotEmpty()) {
-            adapters.add(VideoAdapter(videos) { video ->
-                val intent = Intent(requireContext(), VideoPlayerActivity::class.java)
-                intent.putExtra(VideoPlayerActivity.EXTRA_ITEM_ID, video.id)
-                intent.putExtra(VideoPlayerActivity.EXTRA_IS_AUDIO, false)
-                startActivity(intent)
-            })
-        }
-
-        if (audioItems.isNotEmpty()) {
-            adapters.add(AudioAdapter(audioItems) { item ->
-                val intent = Intent(requireContext(), VideoPlayerActivity::class.java)
-                intent.putExtra(VideoPlayerActivity.EXTRA_ITEM_ID, item.id)
-                intent.putExtra(VideoPlayerActivity.EXTRA_IS_AUDIO, true)
-                startActivity(intent)
-            })
-        }
-
-        binding.folderLoadingSpinner.visibility = View.GONE
-        if (adapters.isEmpty()) {
-            binding.folderEmptyText.visibility = View.VISIBLE
-            binding.folderEmptyText.text = "Nothing here yet"
-        } else {
-            binding.folderContentRecycler.adapter = ConcatAdapter(adapters)
         }
     }
 
