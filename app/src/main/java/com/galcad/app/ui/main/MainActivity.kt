@@ -1,7 +1,10 @@
 package com.galcad.app.ui.main
 
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.galcad.app.R
@@ -13,13 +16,25 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+/**
+ * Bottom nav is 4 main sections (Home, Video, News, Audio) -- Contact Us
+ * moved into the toolbar's overflow menu instead, YouTube-style: primary
+ * destinations get tab icons, secondary ones live under a menu.
+ */
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var bottomNav: BottomNavigationView
+    private var currentLabels: Map<String, String> = emptyMap()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNav)
+        val toolbar = findViewById<Toolbar>(R.id.mainToolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.title = getString(R.string.app_name)
+
+        bottomNav = findViewById(R.id.bottomNav)
 
         if (savedInstanceState == null) {
             showFragment(HomeFragment())
@@ -28,17 +43,34 @@ class MainActivity : AppCompatActivity() {
         bottomNav.setOnItemSelectedListener { item ->
             val fragment: Fragment = when (item.itemId) {
                 R.id.nav_home -> HomeFragment()
-                R.id.nav_video -> FolderBrowserFragment.newInstance(mediaType = "video", categoryId = null, title = "Video")
-                R.id.nav_audio -> FolderBrowserFragment.newInstance(mediaType = "audio", categoryId = null, title = "Audio")
+                R.id.nav_video -> FolderBrowserFragment.newInstance(mediaType = "video", categoryId = null, title = currentLabels["video"] ?: "Video")
+                R.id.nav_audio -> FolderBrowserFragment.newInstance(mediaType = "audio", categoryId = null, title = currentLabels["audio"] ?: "Audio")
                 R.id.nav_news -> NewsFragment()
-                R.id.nav_contact -> ContactFragment()
                 else -> HomeFragment()
             }
+            supportActionBar?.title = item.title
             showFragment(fragment)
             true
         }
 
         applyDynamicMenuLabels(bottomNav)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main_toolbar_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.menu_contact) {
+            supportActionBar?.title = currentLabels["contact"] ?: "Contact Us"
+            bottomNav.menu.setGroupCheckable(0, false, true) // deselect bottom tabs visually
+            for (i in 0 until bottomNav.menu.size()) bottomNav.menu.getItem(i).isChecked = false
+            bottomNav.menu.setGroupCheckable(0, true, true)
+            showFragment(ContactFragment())
+            return true
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     private fun showFragment(fragment: Fragment) {
@@ -54,11 +86,13 @@ class MainActivity : AppCompatActivity() {
             try {
                 val response = ApiClient.get().getSettings()
                 val settings = response.body() ?: return@launch
-                settings.menuVideoLabel?.let { bottomNav.menu.findItem(R.id.nav_video).title = it }
-                settings.menuAudioLabel?.let { bottomNav.menu.findItem(R.id.nav_audio).title = it }
-                settings.menuNewsLabel?.let { bottomNav.menu.findItem(R.id.nav_news).title = it }
-                settings.menuContactLabel?.let { bottomNav.menu.findItem(R.id.nav_contact).title = it }
-                settings.menuHomeLabel?.let { bottomNav.menu.findItem(R.id.nav_home).title = it }
+                val labels = mutableMapOf<String, String>()
+                settings.menuVideoLabel?.let { bottomNav.menu.findItem(R.id.nav_video).title = it; labels["video"] = it }
+                settings.menuAudioLabel?.let { bottomNav.menu.findItem(R.id.nav_audio).title = it; labels["audio"] = it }
+                settings.menuNewsLabel?.let { bottomNav.menu.findItem(R.id.nav_news).title = it; labels["news"] = it }
+                settings.menuContactLabel?.let { labels["contact"] = it }
+                settings.menuHomeLabel?.let { bottomNav.menu.findItem(R.id.nav_home).title = it; labels["home"] = it }
+                currentLabels = labels
             } catch (e: Exception) {
                 // menu just keeps its default English labels if this fails -- never crash over it
             }
