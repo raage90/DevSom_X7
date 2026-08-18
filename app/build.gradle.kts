@@ -27,7 +27,7 @@ android {
         buildConfigField("String", "APP_SIGNING_SECRET", "\"${System.getenv("APP_SIGNING_SECRET")?.takeIf { it.isNotBlank() } ?: ""}\"")
         // Your real Railway backend. Swappable later via the resolver system
         // without needing a new APK build.
-        buildConfigField("String", "FALLBACK_API_URL", "\"${System.getenv("FALLBACK_API_URL")?.takeIf { it.isNotBlank() } ?: "https://resourceful-peace-production.up.railway.app/"}\"")
+        buildConfigField("String", "FALLBACK_API_URL", "\"${System.getenv("FALLBACK_API_URL")?.takeIf { it.isNotBlank() } ?: "https://safsadax-production.up.railway.app/"}\"\")
     }
 
     // Signing is configured via GitHub Actions Secrets, not hardcoded here.
