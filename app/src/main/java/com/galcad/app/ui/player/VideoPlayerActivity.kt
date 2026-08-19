@@ -2,6 +2,8 @@ package com.galcad.app.ui.player
 
 import android.content.pm.ActivityInfo
 import android.os.Bundle
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
@@ -14,6 +16,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.cache.CacheDataSource
 import coil.load
+import com.galcad.app.R
 import com.galcad.app.databinding.ActivityVideoPlayerBinding
 import com.galcad.app.network.ApiClient
 import com.galcad.app.player.OfflineMediaCache
@@ -90,11 +93,44 @@ class VideoPlayerActivity : AppCompatActivity() {
             if (currentItemId != -1) loadAndPlay(currentItemId)
         }
 
+        // Double-tap left/right half of the video to seek -10s/+10s,
+        // YouTube-style. Single taps still toggle the controller as normal.
+        if (!isAudio) {
+            val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+                override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                    if (binding.playerView.isControllerFullyVisible) {
+                        binding.playerView.hideController()
+                    } else {
+                        binding.playerView.showController()
+                    }
+                    return true
+                }
+
+                override fun onDoubleTap(e: MotionEvent): Boolean {
+                    val currentPlayer = player ?: return true
+                    val seekMs = 10_000L
+                    if (e.x < binding.doubleTapOverlay.width / 2) {
+                        currentPlayer.seekTo((currentPlayer.currentPosition - seekMs).coerceAtLeast(0))
+                    } else {
+                        currentPlayer.seekTo(currentPlayer.currentPosition + seekMs)
+                    }
+                    return true
+                }
+            })
+            binding.doubleTapOverlay.setOnTouchListener { _, event ->
+                gestureDetector.onTouchEvent(event)
+                true
+            }
+        }
+
         loadAndPlay(itemId)
     }
 
     private fun toggleFullscreen() {
         isFullscreen = !isFullscreen
+        binding.fullscreenToggleButton.setImageResource(
+            if (isFullscreen) R.drawable.ic_fullscreen_collapse else R.drawable.ic_fullscreen_expand
+        )
         if (isFullscreen) {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)

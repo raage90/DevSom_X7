@@ -12,6 +12,7 @@ import com.galcad.app.network.ApiClient
 import com.galcad.app.ui.contact.ContactFragment
 import com.galcad.app.ui.folders.FolderBrowserFragment
 import com.galcad.app.ui.news.NewsFragment
+import com.galcad.app.ui.video.AllVideosFragment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,7 +44,7 @@ class MainActivity : AppCompatActivity() {
         bottomNav.setOnItemSelectedListener { item ->
             val fragment: Fragment = when (item.itemId) {
                 R.id.nav_home -> HomeFragment()
-                R.id.nav_video -> FolderBrowserFragment.newInstance(mediaType = "video", categoryId = null, title = currentLabels["video"] ?: "Video")
+                R.id.nav_video -> AllVideosFragment()
                 R.id.nav_audio -> FolderBrowserFragment.newInstance(mediaType = "audio", categoryId = null, title = currentLabels["audio"] ?: "Audio")
                 R.id.nav_news -> NewsFragment()
                 else -> HomeFragment()

@@ -18,6 +18,9 @@ interface ApiService {
     @GET("api/videos")
     suspend fun getVideos(@Query("category_id") categoryId: Int?): Response<List<VideoListItem>>
 
+    @GET("api/videos/all")
+    suspend fun getAllVideos(): Response<List<VideoListItem>>
+
     @GET("api/videos/{id}/play")
     suspend fun playVideo(@Path("id") id: Int): Response<VideoPlayResponse>
 
