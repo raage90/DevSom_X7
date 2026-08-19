@@ -36,6 +36,7 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.newsRecycler.layoutManager = LinearLayoutManager(requireContext())
+        binding.newsRecycler.setHasFixedSize(true)
         binding.newsSwipeRefresh.setOnRefreshListener { loadFeed() }
         loadFeed()
     }

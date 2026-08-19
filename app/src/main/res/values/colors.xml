@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Light theme (default) -->
-    <color name="background">#FFFFFF</color>
-    <color name="surface">#F5F6F8</color>
-    <color name="accent">#4F7CFF</color>
-    <color name="text_primary">#111318</color>
-    <color name="text_secondary">#6B7280</color>
-    <color name="error">#DC2626</color>
+    <!-- Modern Premium Color Palette -->
+    <color name="background">#0A0E17</color>
+    <color name="surface">#121826</color>
+    <color name="surface_elevated">#1E2538</color>
+    <color name="accent">#6366F1</color>
+    <color name="accent_variant">#818CF8</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#9CA3AF</color>
+    <color name="text_hint">#6B7280</color>
+    <color name="error">#EF4444</color>
+    <color name="success">#10B981</color>
+    <color name="card_overlay">#80000000</color>
+    <color name="gradient_start">#6366F1</color>
+    <color name="gradient_end">#8B5CF6</color>
 </resources>

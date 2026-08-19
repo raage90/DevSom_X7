@@ -1,47 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?android:attr/selectableItemBackground"
+    android:layout_margin="8dp"
     android:clickable="true"
     android:focusable="true"
-    android:orientation="vertical"
-    android:padding="16dp">
+    app:cardBackgroundColor="@color/surface"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp">
 
-    <ImageView
-        android:id="@+id/newsPhoto"
-        android:layout_width="match_parent"
-        android:layout_height="180dp"
-        android:background="@color/surface"
-        android:scaleType="centerCrop"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/newsTitleText"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:textColor="@color/text_primary"
-        android:textSize="17sp"
-        android:textStyle="bold" />
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/newsBodyPreview"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:maxLines="3"
-        android:ellipsize="end"
-        android:textColor="@color/text_secondary"
-        android:textSize="14sp" />
+        <ImageView
+            android:id="@+id/newsPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:background="@color/surface_elevated"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
 
-    <TextView
-        android:id="@+id/newsMediaBadge"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textColor="@color/accent"
-        android:textSize="12sp"
-        android:visibility="gone" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
 
-</LinearLayout>
+            <TextView
+                android:id="@+id/newsTitleText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:lineSpacingExtra="4dp" />
+
+            <TextView
+                android:id="@+id/newsBodyPreview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:maxLines="3"
+                android:ellipsize="end"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp"
+                android:lineSpacingExtra="2dp" />
+
+            <TextView
+                android:id="@+id/newsMediaBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/media_badge_background"
+                android:paddingStart="12dp"
+                android:paddingTop="6dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="6dp"
+                android:textColor="@color/accent"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

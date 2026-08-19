@@ -30,32 +30,40 @@ object UrlResolver {
         // Example: "https://raw.githubusercontent.com/youraccount/resolver1/main/config.json"
     )
 
-    private val client = OkHttpClient.Builder().build()
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(2, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(2, java.util.concurrent.TimeUnit.SECONDS)
+        .build()
 
     suspend fun resolveApiBaseUrl(context: Context): String = withContext(Dispatchers.IO) {
-        for (url in resolverUrls) {
-            try {
-                val request = Request.Builder().url(url).build()
-                client.newCall(request).execute().use { response ->
-                    if (response.isSuccessful) {
-                        val body = response.body?.string() ?: continue
-                        val domain = JSONObject(body).optString("domain")
-                        if (domain.isNotBlank()) {
-                            val resolved = if (domain.endsWith("/")) domain else "$domain/"
-                            cacheUrl(context, resolved)
-                            return@withContext resolved
+        // Fast path: return cached URL immediately if available
+        getCachedUrl(context)?.let { return@withContext it }
+
+        // Only try resolvers if we have any configured
+        if (resolverUrls.isNotEmpty()) {
+            for (url in resolverUrls) {
+                try {
+                    val request = Request.Builder().url(url).build()
+                    client.newCall(request).execute().use { response ->
+                        if (response.isSuccessful) {
+                            val body = response.body?.string() ?: continue
+                            val domain = JSONObject(body).optString("domain")
+                            if (domain.isNotBlank()) {
+                                val resolved = if (domain.endsWith("/")) domain else "$domain/"
+                                cacheUrl(context, resolved)
+                                return@withContext resolved
+                            }
                         }
                     }
+                } catch (e: IOException) {
+                    // this resolver is down/unreachable -- try the next one
+                    continue
                 }
-            } catch (e: IOException) {
-                // this resolver is down/unreachable -- try the next one
-                continue
             }
         }
 
-        // All resolvers failed (or none configured yet) -- use last known
-        // good URL if we have one cached, otherwise the build-time fallback.
-        getCachedUrl(context) ?: BuildConfig.FALLBACK_API_URL
+        // All resolvers failed (or none configured yet) -- use build-time fallback immediately
+        BuildConfig.FALLBACK_API_URL
     }
 
     private fun prefs(context: Context): SharedPreferences =

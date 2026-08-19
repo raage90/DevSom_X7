@@ -6,7 +6,11 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -124,16 +128,31 @@ class VideoPlayerActivity : AppCompatActivity() {
         }
 
         loadAndPlay(itemId)
+
+        // Set up modern back button handling
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (isFullscreen) {
+                    toggleFullscreen()
+                } else {
+                    finish()
+                }
+            }
+        })
     }
 
     private fun toggleFullscreen() {
         isFullscreen = !isFullscreen
-        binding.fullscreenToggleButton.setImageResource(
+        binding.fullscreenToggleButton.setIconResource(
             if (isFullscreen) R.drawable.ic_fullscreen_collapse else R.drawable.ic_fullscreen_expand
         )
         if (isFullscreen) {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-            window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
+            // Use modern WindowInsetsControllerCompat instead of deprecated FLAG_FULLSCREEN
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
+            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
+            windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             binding.playerTitleText.visibility = View.GONE
             binding.upNextLabel.visibility = View.GONE
             binding.upNextRow.visibility = View.GONE
@@ -144,21 +163,16 @@ class VideoPlayerActivity : AppCompatActivity() {
             binding.playerContainer.layoutParams = params
         } else {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+            // Restore system bars using modern WindowInsetsControllerCompat
+            WindowCompat.setDecorFitsSystemWindows(window, true)
+            val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
+            windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
             binding.playerTitleText.visibility = View.VISIBLE
             restoreUpNextVisibility()
             val params = binding.playerContainer.layoutParams as androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
             params.height = 0
             params.dimensionRatio = "H,16:9"
             binding.playerContainer.layoutParams = params
-        }
-    }
-
-    override fun onBackPressed() {
-        if (isFullscreen) {
-            toggleFullscreen()
-        } else {
-            super.onBackPressed()
         }
     }
 
@@ -213,7 +227,7 @@ class VideoPlayerActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 binding.playerLoadingSpinner.visibility = View.GONE
                 binding.playerErrorText.visibility = View.VISIBLE
-                binding.playerErrorText.text = "Couldn't load this ${if (isAudio) "audio" else "video"}. Tap here to retry."
+                // Error message is now static in XML layout
             }
         }
     }

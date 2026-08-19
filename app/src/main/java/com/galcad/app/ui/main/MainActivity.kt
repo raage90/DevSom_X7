@@ -16,6 +16,7 @@ import com.galcad.app.ui.video.AllVideosFragment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Bottom nav is 4 main sections (Home, Video, News, Audio) -- Contact Us
@@ -83,17 +84,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applyDynamicMenuLabels(bottomNav: BottomNavigationView) {
-        CoroutineScope(Dispatchers.Main).launch {
+        // Load labels in background without blocking UI
+        CoroutineScope(Dispatchers.IO).launch {
             try {
                 val response = ApiClient.get().getSettings()
                 val settings = response.body() ?: return@launch
                 val labels = mutableMapOf<String, String>()
-                settings.menuVideoLabel?.let { bottomNav.menu.findItem(R.id.nav_video).title = it; labels["video"] = it }
-                settings.menuAudioLabel?.let { bottomNav.menu.findItem(R.id.nav_audio).title = it; labels["audio"] = it }
-                settings.menuNewsLabel?.let { bottomNav.menu.findItem(R.id.nav_news).title = it; labels["news"] = it }
+                settings.menuVideoLabel?.let { labels["video"] = it }
+                settings.menuAudioLabel?.let { labels["audio"] = it }
+                settings.menuNewsLabel?.let { labels["news"] = it }
                 settings.menuContactLabel?.let { labels["contact"] = it }
-                settings.menuHomeLabel?.let { bottomNav.menu.findItem(R.id.nav_home).title = it; labels["home"] = it }
-                currentLabels = labels
+                settings.menuHomeLabel?.let { labels["home"] = it }
+
+                // Update UI on main thread
+                withContext(Dispatchers.Main) {
+                    currentLabels = labels
+                    labels["video"]?.let { bottomNav.menu.findItem(R.id.nav_video).title = it }
+                    labels["audio"]?.let { bottomNav.menu.findItem(R.id.nav_audio).title = it }
+                    labels["news"]?.let { bottomNav.menu.findItem(R.id.nav_news).title = it }
+                    labels["home"]?.let { bottomNav.menu.findItem(R.id.nav_home).title = it }
+                }
             } catch (e: Exception) {
                 // menu just keeps its default English labels if this fails -- never crash over it
             }

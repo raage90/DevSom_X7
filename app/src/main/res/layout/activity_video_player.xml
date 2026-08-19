@@ -6,139 +6,209 @@
     android:layout_height="match_parent"
     android:background="@color/background">
 
-    <!-- Player box: fixed 16:9, NOT fullscreen by default. Tap the
-         fullscreen button (bottom-right of the player) to expand to
-         landscape fullscreen; tap again (or back) to return here. -->
-    <FrameLayout
-        android:id="@+id/playerContainer"
+    <!-- Premium Player Container with Rounded Corners -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/playerCard"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#000000"
+        android:layout_margin="12dp"
+        app:cardBackgroundColor="@android:color/black"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="8dp"
         app:layout_constraintDimensionRatio="H,16:9"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <androidx.media3.ui.PlayerView
-            android:id="@+id/playerView"
+        <FrameLayout
+            android:id="@+id/playerContainer"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:use_controller="true"
-            app:show_buffering="always"
-            app:show_previous_button="false"
-            app:show_next_button="false"
-            app:show_rewind_button="false"
-            app:show_fastforward_button="false" />
+            android:layout_height="match_parent">
 
-        <!-- Transparent overlay that catches double-taps for ±10s seek
-             (left half = back, right half = forward), while single taps
-             pass through to the normal show/hide-controls behavior. -->
-        <View
-            android:id="@+id/doubleTapOverlay"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@android:color/transparent" />
+            <androidx.media3.ui.PlayerView
+                android:id="@+id/playerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:use_controller="true"
+                app:show_buffering="always"
+                app:show_previous_button="false"
+                app:show_next_button="false"
+                app:show_rewind_button="false"
+                app:show_fastforward_button="false"
+                app:controller_layout_id="@layout/custom_player_controls" />
 
-        <ImageButton
-            android:id="@+id/fullscreenToggleButton"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_gravity="bottom|end"
-            android:layout_margin="8dp"
-            android:background="@android:color/transparent"
-            android:contentDescription="Toggle fullscreen"
-            android:padding="8dp"
-            android:src="@drawable/ic_fullscreen_expand" />
+            <!-- Premium double-tap overlay with visual feedback -->
+            <View
+                android:id="@+id/doubleTapOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent" />
 
-        <ProgressBar
-            android:id="@+id/playerLoadingSpinner"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:indeterminateTint="@color/accent" />
+            <!-- Premium Fullscreen Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/fullscreenToggleButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="12dp"
+                android:insetLeft="0dp"
+                android:insetTop="0dp"
+                android:insetRight="0dp"
+                android:insetBottom="0dp"
+                android:contentDescription="Toggle fullscreen"
+                android:padding="12dp"
+                app:icon="@drawable/ic_fullscreen_expand"
+                app:iconSize="24dp"
+                app:iconTint="@color/text_primary"
+                app:backgroundTint="@color/card_overlay"
+                app:cornerRadius="24dp" />
 
-        <TextView
-            android:id="@+id/playerErrorText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:gravity="center"
-            android:padding="24dp"
-            android:textColor="@android:color/white"
-            android:visibility="gone" />
+            <!-- Premium Loading Spinner -->
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/playerLoadingSpinner"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center"
+                android:indeterminate="true"
+                app:indicatorColor="@color/accent"
+                app:trackColor="@color/surface_elevated"
+                app:indicatorSize="48dp" />
 
-    </FrameLayout>
+            <!-- Premium Error Display -->
+            <LinearLayout
+                android:id="@+id/playerErrorText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:background="@drawable/error_background"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="24dp"
+                android:visibility="gone">
 
-    <TextView
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⚠️"
+                    android:textSize="32sp" />
+
+                <TextView
+                    android:id="@+id/errorMessageText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Couldn't load this video. Tap here to retry."
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Premium Title Section -->
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/playerTitleText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:padding="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="16dp"
         android:textColor="@color/text_primary"
-        android:textSize="17sp"
+        android:textSize="20sp"
         android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/playerContainer"
+        android:lineSpacingExtra="4dp"
+        app:layout_constraintTop_toBottomOf="@id/playerCard"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <TextView
+    <!-- Premium Up Next Section -->
+    <com.google.android.material.textview.MaterialTextView
         android:id="@+id/upNextLabel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="16dp"
-        android:paddingBottom="8dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="16dp"
         android:text="Up next"
         android:textColor="@color/text_secondary"
-        android:textSize="13sp"
+        android:textSize="14sp"
+        android:textStyle="bold"
         app:layout_constraintTop_toBottomOf="@id/playerTitleText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <LinearLayout
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/upNextRow"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="?android:attr/selectableItemBackground"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="12dp"
         android:clickable="true"
         android:focusable="true"
-        android:orientation="horizontal"
-        android:padding="16dp"
+        app:cardBackgroundColor="@color/surface"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/upNextLabel"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <FrameLayout
-            android:layout_width="140dp"
-            android:layout_height="79dp">
-
-            <ImageView
-                android:id="@+id/upNextThumbnail"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/surface"
-                android:scaleType="centerCrop" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="▶"
-                android:textColor="@color/text_secondary"
-                android:textSize="20sp" />
-
-        </FrameLayout>
-
-        <TextView
-            android:id="@+id/upNextTitleText"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginStart="12dp"
-            android:layout_weight="1"
-            android:textColor="@color/text_primary"
-            android:textSize="15sp" />
+            android:orientation="horizontal"
+            android:padding="12dp">
 
-    </LinearLayout>
+            <FrameLayout
+                android:layout_width="120dp"
+                android:layout_height="68dp">
+
+                <ImageView
+                    android:id="@+id/upNextThumbnail"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/surface_elevated"
+                    android:scaleType="centerCrop" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    app:cardBackgroundColor="@color/accent"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="4dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="▶"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                </com.google.android.material.card.MaterialCardView>
+
+            </FrameLayout>
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/upNextTitleText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:lineSpacingExtra="2dp" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

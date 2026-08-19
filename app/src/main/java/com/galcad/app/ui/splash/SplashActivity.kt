@@ -13,6 +13,7 @@ import com.galcad.app.util.DeviceIdentity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SplashActivity : AppCompatActivity() {
 
@@ -20,21 +21,24 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
 
+        // Start parallel initialization for fast startup
         CoroutineScope(Dispatchers.Main).launch {
-            // 1. Find the real backend address (resolver system, falls back
-            //    to the built-in Railway URL if nothing responds)
-            val baseUrl = UrlResolver.resolveApiBaseUrl(applicationContext)
-            // Same anonymous per-install ID used for analytics, reused here
-            // as part of every request's signature.
+            // 1. Initialize device ID (fast, local operation)
             val installId = DeviceIdentity.getOrCreateDeviceHash(applicationContext)
+
+            // 2. Resolve backend URL (fast with timeouts)
+            val baseUrl = withContext(Dispatchers.IO) {
+                UrlResolver.resolveApiBaseUrl(applicationContext)
+            }
             ApiClient.init(baseUrl, installId)
 
-            // 2. Check whether this install is too old to keep using
-            val versionCheckPassed = checkAppVersion()
+            // 3. Check version in background (non-blocking)
+            val versionCheckPassed = withContext(Dispatchers.IO) {
+                checkAppVersion()
+            }
 
             if (versionCheckPassed) {
-                // 3. Fire-and-forget analytics ping -- never blocks startup,
-                //    and a failure here never stops the app from opening
+                // 4. Fire-and-forget analytics ping - never blocks startup
                 trackOpenSilently(installId)
                 goToMainApp()
             }
@@ -50,10 +54,13 @@ class SplashActivity : AppCompatActivity() {
             if (response.isSuccessful && info != null) {
                 val minimum = info.minimumAppVersion.toIntOrNull() ?: 1
                 if (BuildConfig.VERSION_CODE < minimum) {
-                    val intent = Intent(this, UpdateRequiredActivity::class.java)
-                    intent.putExtra("message", info.updateMessage)
-                    startActivity(intent)
-                    finish()
+                    // Switch to main thread for UI operations
+                    withContext(Dispatchers.Main) {
+                        val intent = Intent(this@SplashActivity, UpdateRequiredActivity::class.java)
+                        intent.putExtra("message", info.updateMessage)
+                        startActivity(intent)
+                        finish()
+                    }
                     return false
                 }
             }
